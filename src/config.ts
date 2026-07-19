@@ -74,7 +74,10 @@ export function resolveContent(search: string = window.location.search): CardCon
   let imgs = imgsRaw
     ? imgsRaw.split(",").map((s) => s.trim()).filter((s) => /^(https?:\/\/|[\w./-]+\.(webp|jpe?g|png|gif))/i.test(s)).slice(0, 8)
     : [];
-  const picsN = parseInt(param(p, "pics") ?? "", 10);
+  // Default: the 5 repo-hosted photos (public/pics/1-5.webp). ?pics=N overrides
+  // the count; ?pics=0 forces the placeholder hearts; ?imgs=… always wins.
+  const picsParam = parseInt(param(p, "pics") ?? "", 10);
+  const picsN = isNaN(picsParam) ? 5 : picsParam;
   if (!imgs.length && picsN >= 1) {
     imgs = Array.from({ length: Math.min(picsN, 8) }, (_, i) => `pics/${i + 1}.webp`);
   }

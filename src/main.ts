@@ -55,8 +55,13 @@ async function init() {
   const flow = order.filter(enabled);
 
   let current: SceneName | null = null;
+  let memTimer = 0; // auto-slide interval for the memories carousel
 
   function goto(name: SceneName) {
+    if (memTimer && name !== "memories") {
+      clearInterval(memTimer);
+      memTimer = 0;
+    }
     if (current) refs.scenes[current].classList.remove("is-active");
     current = name;
     const elScene = refs.scenes[name];
@@ -178,10 +183,32 @@ async function init() {
     },
 
     memories() {
-      // one gentle scroll nudge so "swipe for more" is felt, not just read
+      // Auto-sliding carousel: glides to the next photo every ~2.6s, loops back,
+      // and hands control to the user the moment they touch it.
       if (reduced) return;
-      const track = refs.scenes.memories.querySelector(".mem-track");
-      if (track) gsap.to(track, { scrollLeft: 70, duration: 0.7, delay: 1.0, yoyo: true, repeat: 1, ease: "sine.inOut" });
+      const track = refs.scenes.memories.querySelector<HTMLElement>(".mem-track");
+      if (!track) return;
+      if (memTimer) clearInterval(memTimer);
+      const cards = Array.from(track.querySelectorAll<HTMLElement>(".mem-card"));
+      if (cards.length < 2) return;
+      track.style.scrollSnapType = "none"; // snap fights programmatic glides
+      let idx = 0;
+      memTimer = window.setInterval(() => {
+        idx = (idx + 1) % cards.length;
+        const card = cards[idx];
+        const target = card.offsetLeft - (track.clientWidth - card.clientWidth) / 2;
+        gsap.to(track, { scrollLeft: Math.max(0, target), duration: 0.85, ease: "power2.inOut" });
+      }, 2600);
+      track.addEventListener(
+        "pointerdown",
+        () => {
+          if (memTimer) clearInterval(memTimer);
+          memTimer = 0;
+          gsap.killTweensOf(track);
+          track.style.scrollSnapType = ""; // restore finger-snap for manual swiping
+        },
+        { once: true }
+      );
     },
 
     message() {
