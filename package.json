@@ -1,0 +1,22 @@
+{
+  "name": "birthday-noir",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A locked, multi-scene 'magic gift' birthday website — personalized per recipient via URL params.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  },
+  "dependencies": {
+    "gsap": "^3.12.5"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true
+  }
+}
