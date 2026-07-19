@@ -8,6 +8,7 @@ export interface SceneRefs {
   scenes: Record<SceneName, HTMLElement>;
   // lock
   lockDots: HTMLElement[];
+  lockError: HTMLElement;
   keypad: HTMLElement;
   // loading
   loadBarFill: HTMLElement;
@@ -62,6 +63,9 @@ export function buildScenes(root: HTMLElement, c: CardContent): SceneRefs {
     dots.appendChild(d);
     lockDots.push(d);
   }
+  const lockError = el("div", "lock-error");
+  lockError.textContent = "wrong passkey — try again ♡";
+  lockError.setAttribute("role", "status");
   const keypad = el("div", "keypad");
   keypad.setAttribute("role", "group");
   keypad.setAttribute("aria-label", "Passkey keypad");
@@ -76,7 +80,7 @@ export function buildScenes(root: HTMLElement, c: CardContent): SceneRefs {
     if (k === "") b.tabIndex = -1;
     keypad.appendChild(b);
   }
-  lock.append(avatar, lockWord, hint, dots, keypad);
+  lock.append(avatar, lockWord, hint, dots, lockError, keypad);
 
   /* ------------------------------------------------------------- loading -- */
   const loading = scene("loading", "Loading");
@@ -190,6 +194,7 @@ export function buildScenes(root: HTMLElement, c: CardContent): SceneRefs {
     canvas,
     scenes: { lock, loading, intro, counter, memories, message, finale },
     lockDots,
+    lockError,
     keypad,
     loadBarFill: fill,
     introBear,

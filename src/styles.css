@@ -99,6 +99,18 @@ body {
 .btn:hover { border-color: var(--rose); box-shadow: 0 0 34px -6px var(--rose); }
 .btn:active { transform: scale(0.96); }
 .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+/* premium sheen sweeping across CTAs every few seconds */
+.btn { position: relative; overflow: hidden; }
+.btn::after {
+  content: "";
+  position: absolute; top: 0; left: -70%;
+  width: 45%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: skewX(-20deg);
+  animation: sheen 4.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes sheen { 0%, 55% { left: -70%; } 85%, 100% { left: 140%; } }
 
 /* ============================================================================
    Scene 1 — LOCK
@@ -124,6 +136,13 @@ body {
 .lock-hint {
   font-size: 0.64rem; letter-spacing: 0.2em;
   color: color-mix(in srgb, var(--rose-pale) 50%, transparent);
+}
+
+.lock-error {
+  font-size: 0.62rem; letter-spacing: 0.2em;
+  color: var(--rose);
+  min-height: 1.1em;
+  opacity: 0;
 }
 
 .lock-dots { display: flex; gap: 14px; margin: 0.5rem 0; }
@@ -171,9 +190,12 @@ body {
 .load-bar i {
   display: block; height: 100%; width: 0%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--rose), var(--rose-light));
+  background: linear-gradient(90deg, var(--rose), var(--rose-light), var(--rose));
+  background-size: 200% 100%;
   box-shadow: 0 0 12px var(--rose);
+  animation: barflow 1.3s linear infinite;
 }
+@keyframes barflow { to { background-position: -200% 0; } }
 
 /* ============================================================================
    Scene 3 — INTRO  (+ shared bear illustration)
@@ -184,7 +206,17 @@ body {
   display: grid; place-items: center;
   border: 1px solid var(--line);
   box-shadow: 0 0 40px -12px var(--rose), 0 0 0 10px rgba(231, 90, 124, 0.04);
+  position: relative;
 }
+/* slowly-spinning dashed halo around the bear */
+.ring::before {
+  content: "";
+  position: absolute; inset: -12px;
+  border-radius: 50%;
+  border: 1px dashed rgba(231, 90, 124, 0.4);
+  animation: spin 28s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ============================================================================
    Scene 4 — COUNTER
@@ -234,6 +266,9 @@ body {
   display: grid; place-items: center;
   position: relative;
 }
+/* handmade-collage tilt, alternating */
+.mem-card:nth-child(odd) { transform: rotate(-2deg); }
+.mem-card:nth-child(even) { transform: rotate(2deg); }
 .mem-card img {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover;
@@ -259,6 +294,11 @@ body {
   padding: clamp(22px, 6vw, 34px);
   display: grid; gap: 14px;
   text-align: left;
+  animation: panelglow 4.5s ease-in-out infinite;
+}
+@keyframes panelglow {
+  0%, 100% { box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9), 0 0 44px -18px var(--rose); }
+  50% { box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9), 0 0 62px -14px var(--rose); }
 }
 .letter-body {
   font-family: var(--font-serif); font-style: italic; font-weight: 500;
@@ -318,6 +358,28 @@ body {
 .replay:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .replay svg { width: 12px; height: 12px; }
 
+/* ---- rising balloons behind the finale ---- */
+.balloons {
+  position: absolute; inset: 0;
+  overflow: hidden; pointer-events: none;
+  z-index: -1;
+}
+.balloon {
+  position: absolute; bottom: auto; top: 0;
+  width: 46px; height: 58px;
+  border-radius: 50% 50% 50% 50% / 56% 56% 44% 44%;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.35) 0 18%, transparent 40%),
+    radial-gradient(circle at 50% 45%, var(--rose) 0%, var(--wine) 90%);
+  box-shadow: 0 0 24px -8px var(--rose);
+}
+.balloon::after {
+  content: "";
+  position: absolute; top: 100%; left: 50%;
+  width: 1px; height: 44px;
+  background: linear-gradient(180deg, rgba(255, 179, 193, 0.5), transparent);
+}
+
 /* vignette over everything for the cinematic edge */
 #app::after {
   content: "";
@@ -326,3 +388,7 @@ body {
 }
 
 .reduced .caret { animation: none; }
+/* reduced motion: silence every decorative loop */
+@media (prefers-reduced-motion: reduce) {
+  .btn::after, .ring::before, .load-bar i, .letter-panel, .hint__dot { animation: none !important; }
+}

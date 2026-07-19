@@ -62,8 +62,10 @@ async function init() {
     const elScene = refs.scenes[name];
     elScene.classList.add("is-active");
     if (!reduced) {
+      // decorative layers (balloons) are excluded from the entry stagger
+      const kids = Array.from(elScene.children).filter((k) => !k.classList.contains("balloons"));
       gsap.fromTo(
-        Array.from(elScene.children),
+        kids,
         { opacity: 0, y: 22 },
         { opacity: 1, y: 0, duration: 0.7, stagger: 0.09, ease: "power3.out", delay: 0.12, overwrite: "auto" }
       );
@@ -89,18 +91,20 @@ async function init() {
       entered = "";
       setTimeout(() => { renderDots(); next(); }, 350);
     } else {
-      // wrong → shake + clear
+      // wrong → shake + visible feedback + clear
       gsap.fromTo(
         refs.lockDots[0].parentElement,
         { x: 0 },
         { x: 10, duration: 0.06, repeat: 5, yoyo: true, ease: "power1.inOut", clearProps: "x" }
       );
+      gsap.fromTo(refs.lockError, { opacity: 0 }, { opacity: 1, duration: 0.3 });
       entered = "";
       setTimeout(renderDots, 320);
     }
   };
 
   const pressKey = (k: string) => {
+    gsap.to(refs.lockError, { opacity: 0, duration: 0.2 });
     if (k === "back") entered = entered.slice(0, -1);
     else if (/^\d$/.test(k) && entered.length < 4) entered += k;
     renderDots();
@@ -117,13 +121,34 @@ async function init() {
     if (e.key === "Backspace") pressKey("back");
   });
 
+  /** Start an idle loop once per element (survives replays without stacking). */
+  const idle = (el: Element | null, make: (el: Element) => void) => {
+    if (reduced || !el || (el as HTMLElement).dataset.idle) return;
+    (el as HTMLElement).dataset.idle = "1";
+    make(el);
+  };
+
   /* ------------------------------------------------------------ per-scene */
   const onEnter: Partial<Record<SceneName, () => void>> = {
     loading() {
+      // sleeping bear gently bobs while the bar fills
+      idle(refs.scenes.loading.querySelector(".load-bear"), (b) =>
+        gsap.to(b, { y: -6, duration: 1.4, yoyo: true, repeat: -1, ease: "sine.inOut" })
+      );
       gsap.fromTo(
         refs.loadBarFill,
         { width: "0%" },
         { width: "100%", duration: reduced ? 0.1 : 2.4, ease: "power1.inOut", onComplete: next }
+      );
+    },
+
+    intro() {
+      // bear breathes softly inside its slowly-spinning halo (CSS spins the ring)
+      idle(refs.introBear.querySelector(".bear-body"), (b) =>
+        gsap.to(b, {
+          scale: 1.03, transformOrigin: "50% 62%", duration: 1.7,
+          yoyo: true, repeat: -1, ease: "sine.inOut",
+        })
       );
     },
 
@@ -138,11 +163,25 @@ async function init() {
           delay: reduced ? 0 : delay,
           ease: "power2.out",
           onUpdate: () => (elNum.textContent = String(Math.round(proxy.v))),
+          onComplete: () => {
+            if (reduced) return;
+            // landing pop + a small heart-spark puff under each number
+            gsap.fromTo(elNum, { scale: 1.22 }, { scale: 1, duration: 0.45, ease: "back.out(2.5)" });
+            const r = elNum.getBoundingClientRect();
+            field.burst(r.left + r.width / 2, r.top + r.height / 2, 12);
+          },
         });
       };
       spin(refs.countNums.years, parts.years, 0.3);
-      spin(refs.countNums.months, parts.months, 0.45);
-      spin(refs.countNums.days, parts.days, 0.6);
+      spin(refs.countNums.months, parts.months, 0.5);
+      spin(refs.countNums.days, parts.days, 0.7);
+    },
+
+    memories() {
+      // one gentle scroll nudge so "swipe for more" is felt, not just read
+      if (reduced) return;
+      const track = refs.scenes.memories.querySelector(".mem-track");
+      if (track) gsap.to(track, { scrollLeft: 70, duration: 0.7, delay: 1.0, yoyo: true, repeat: 1, ease: "sine.inOut" });
     },
 
     message() {
@@ -180,6 +219,29 @@ async function init() {
       gsap.set(refs.finaleFrom, { opacity: 0, y: 12 });
       gsap.set(refs.replay, { opacity: 0 });
       refs.replay.classList.remove("is-on");
+
+      // rising balloons layer (created once, loops forever behind the text)
+      if (!reduced && !refs.scenes.finale.querySelector(".balloons")) {
+        const layer = document.createElement("div");
+        layer.className = "balloons";
+        layer.setAttribute("aria-hidden", "true");
+        refs.scenes.finale.prepend(layer);
+        for (let i = 0; i < 6; i++) {
+          const b = document.createElement("i");
+          b.className = "balloon";
+          b.style.left = `${6 + i * 16 + Math.random() * 5}%`;
+          b.style.opacity = String(0.35 + Math.random() * 0.3);
+          const s = 0.7 + Math.random() * 0.55;
+          b.style.transform = `scale(${s})`;
+          layer.appendChild(b);
+          gsap.fromTo(
+            b,
+            { y: "105vh" },
+            { y: "-35vh", duration: 10 + Math.random() * 6, delay: i * 1.1, repeat: -1, ease: "none" }
+          );
+          gsap.to(b, { x: 26, duration: 2 + Math.random() * 1.5, yoyo: true, repeat: -1, ease: "sine.inOut" });
+        }
+      }
 
       const slotRect = () => refs.finaleSlot.getBoundingClientRect();
 

@@ -68,10 +68,16 @@ export function resolveContent(search: string = window.location.search): CardCon
   }
   if (!key || !/^\d{4}$/.test(key)) key = null;
 
+  // Photos: ?imgs=url1,url2 (absolute or site-relative), or ?pics=N which loads
+  // the repo-hosted pics/1.webp … pics/N.webp (drop files in public/pics/).
   const imgsRaw = param(p, "imgs") ?? (CONFIG.imgs || "");
-  const imgs = imgsRaw
-    ? imgsRaw.split(",").map((s) => s.trim()).filter((s) => /^https?:\/\//.test(s)).slice(0, 8)
+  let imgs = imgsRaw
+    ? imgsRaw.split(",").map((s) => s.trim()).filter((s) => /^(https?:\/\/|[\w./-]+\.(webp|jpe?g|png|gif))/i.test(s)).slice(0, 8)
     : [];
+  const picsN = parseInt(param(p, "pics") ?? "", 10);
+  if (!imgs.length && picsN >= 1) {
+    imgs = Array.from({ length: Math.min(picsN, 8) }, (_, i) => `pics/${i + 1}.webp`);
+  }
 
   return {
     to,
