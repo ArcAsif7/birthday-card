@@ -342,7 +342,38 @@ body {
 }
 .mem-card:nth-child(odd) { transform: rotate(-2deg); }
 .mem-card:nth-child(even) { transform: rotate(2deg); }
-.mem-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mem-card img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  /* ken-burns drift — photos feel alive, never static */
+  animation: kenburns 9s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.mem-card:nth-child(even) img { animation-delay: -4.5s; }
+@keyframes kenburns {
+  from { transform: scale(1.02); }
+  to { transform: scale(1.1) translate(1.6%, -1.6%); }
+}
+/* magic shine sweeping across each photo, staggered per card */
+.mem-card::after {
+  content: "";
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.22) 46%, transparent 60%);
+  background-size: 260% 100%;
+  background-position: 130% 0;
+  animation: cardshine 5s ease-in-out infinite;
+}
+.mem-card:nth-child(2)::after { animation-delay: 1.2s; }
+.mem-card:nth-child(3)::after { animation-delay: 2.4s; }
+.mem-card:nth-child(4)::after { animation-delay: 3.1s; }
+.mem-card:nth-child(5)::after { animation-delay: 1.8s; }
+.mem-card:nth-child(6)::after { animation-delay: 2.9s; }
+@keyframes cardshine {
+  0%, 55% { background-position: 130% 0; }
+  90%, 100% { background-position: -70% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mem-card img, .mem-card::after { animation: none !important; }
+}
 .mem-card .ph { display: grid; place-items: center; gap: 10px; color: var(--ink-faint); font-family: var(--font-serif); font-style: italic; font-size: 0.95rem; }
 .mem-card .ph svg { width: 44px; height: 44px; opacity: 0.8; color: var(--accent); }
 

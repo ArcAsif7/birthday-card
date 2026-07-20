@@ -212,8 +212,17 @@ async function init() {
         idx = (idx + 1) % cards.length;
         const card = cards[idx];
         const target = card.offsetLeft - (track.clientWidth - card.clientWidth) / 2;
-        gsap.to(track, { scrollLeft: Math.max(0, target), duration: 0.85, ease: "power2.inOut" });
-      }, 2600);
+        // long, buttery glide + a little themed sparkle greeting the new photo
+        gsap.to(track, {
+          scrollLeft: Math.max(0, target),
+          duration: 1.15,
+          ease: "power2.inOut",
+          onComplete: () => {
+            const r = card.getBoundingClientRect();
+            field.burst(r.left + r.width / 2, r.top + r.height * 0.3, 10);
+          },
+        });
+      }, 3000);
       track.addEventListener(
         "pointerdown",
         () => {
