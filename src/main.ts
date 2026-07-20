@@ -29,6 +29,8 @@ async function init() {
   const q = new URLSearchParams(window.location.search);
   if (!q.get("g") && !q.get("greeting")) content.greeting = fill(theme.copy.greeting, content.to);
   if (!q.get("msg") && !q.get("message")) content.message = fill(theme.copy.message, content.to);
+  // Occasion demo photos: unless the link pins ?imgs/?pics, use the theme's set.
+  if (!q.get("imgs") && q.get("pics") == null && theme.defaultPics) content.imgs = theme.defaultPics;
   document.title = fill(theme.copy.docTitle, content.to);
 
   const app = document.getElementById("app")!;

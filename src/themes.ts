@@ -43,6 +43,8 @@ export interface Theme {
   colors: string[];
   motif: MotifKind;
   copy: OccasionCopy;
+  /** Occasion demo photos (repo-hosted) used when no ?imgs/?pics params. */
+  defaultPics?: string[];
 }
 
 /* ------------------------------------------------------------------ copy -- */
@@ -142,24 +144,28 @@ export const THEMES: Record<string, Theme> = {
     ambient: "petal", burst: "heart",
     colors: ["#ff5f8f", "#ffc2d4", "#e9c982", "#ff8fb3"],
     motif: "hearts", copy: LOVE,
+    defaultPics: ["pics/love/1.jpg", "pics/love/2.jpg", "pics/love/3.jpg", "pics/love/4.jpg", "pics/love/5.jpg", "pics/love/6.jpg"],
   },
   mom: {
     id: "mom", label: "Mother's Day — Rose Gold",
     ambient: "petal", burst: "heart",
     colors: ["#d96e8f", "#f0b6c5", "#c99a4e", "#ffffff"],
     motif: "tulips", copy: MOM,
+    defaultPics: ["pics/mom/1.jpg", "pics/mom/2.jpg", "pics/mom/3.jpg", "pics/mom/4.jpg", "pics/mom/5.jpg", "pics/mom/6.jpg"],
   },
   dad: {
     id: "dad", label: "Father's Day — Midnight Royale",
     ambient: "sparkle", burst: "star",
     colors: ["#e3c47a", "#f0dca6", "#9ad0ff", "#ffffff"],
     motif: "crown", copy: DAD,
+    defaultPics: ["pics/dad/1.jpg", "pics/dad/2.jpg", "pics/dad/3.jpg", "pics/dad/4.jpg", "pics/dad/5.jpg", "pics/dad/6.jpg"],
   },
   eid: {
     id: "eid", label: "Eid — Emerald & Gold",
     ambient: "sparkle", burst: "star",
     colors: ["#e8cd82", "#f3dfa5", "#7fd8b8", "#ffffff"],
     motif: "crescent", copy: EID,
+    defaultPics: ["pics/eid/1.jpg", "pics/eid/2.jpg", "pics/eid/3.jpg", "pics/eid/4.jpg", "pics/eid/5.jpg", "pics/eid/6.jpg"],
   },
 
   /* ---- palette-only birthday variants (kept for per-client colour choice) ---- */
