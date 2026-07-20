@@ -4,6 +4,7 @@ import { resolveContent, ageParts } from "./config.ts";
 import { buildScenes, bearWake, type SceneName } from "./scenes.ts";
 import { Writing } from "./writing.ts";
 import { ParticleField } from "./particles.ts";
+import { resolveTheme, fill } from "./themes.ts";
 
 /**
  * Scene flow (each step optional pieces skip cleanly):
@@ -19,28 +20,40 @@ async function init() {
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduced) document.documentElement.classList.add("reduced");
 
+  // Occasion theme via ?theme=birthday|love|mom|dad|eid (+ palette variants).
+  const theme = resolveTheme();
+  document.documentElement.dataset.theme = theme.palette ?? theme.id;
+
   const content = resolveContent();
-  document.title = `A gift for ${content.to} ♡`;
+  // Occasion defaults: when no explicit greeting/message params, use the theme copy.
+  const q = new URLSearchParams(window.location.search);
+  if (!q.get("g") && !q.get("greeting")) content.greeting = fill(theme.copy.greeting, content.to);
+  if (!q.get("msg") && !q.get("message")) content.message = fill(theme.copy.message, content.to);
+  document.title = fill(theme.copy.docTitle, content.to);
 
   const app = document.getElementById("app")!;
-  const refs = buildScenes(app, content);
+  const refs = buildScenes(app, content, theme);
 
   // scene containers get a CSS fade; children are staggered per-entry
   for (const s of Object.values(refs.scenes)) s.style.transition = "opacity 0.55s ease";
 
   const field = new ParticleField(refs.canvas, {
-    rose: "#e75a7c",
-    roseLight: "#ffb3c1",
-    gold: "#e9c982",
+    colors: theme.colors,
+    ambient: theme.ambient,
+    burst: theme.burst,
     reduced,
   });
   field.start();
 
   // ------------------------------------------------------------------ writing
+  // Ink + pen glow track the active theme's palette so the greeting reads on
+  // any background (dark ink on the bright themes, gold on amethyst).
+  const css = getComputedStyle(document.documentElement);
+  const cssVar = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
   const writing = new Writing({
     greeting: content.greeting,
-    gold: "#ffb3c1",        // stroke base ink
-    brightGold: "#ffe0e6",  // pen glow / shimmer
+    gold: cssVar("--title", "#c23a56"),       // stroke base ink
+    brightGold: cssVar("--accent", "#e0567a"), // pen glow / shimmer
     scriptFont: "'Great Vibes', cursive",
     reduced,
   });
@@ -149,7 +162,7 @@ async function init() {
 
     intro() {
       // bear breathes softly inside its slowly-spinning halo (CSS spins the ring)
-      idle(refs.introBear.querySelector(".bear-body"), (b) =>
+      idle(refs.introBear.querySelector(".motif-body"), (b) =>
         gsap.to(b, {
           scale: 1.03, transformOrigin: "50% 62%", duration: 1.7,
           yoyo: true, repeat: -1, ease: "sine.inOut",
