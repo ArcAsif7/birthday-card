@@ -36,6 +36,8 @@ export interface CardContent {
   key: string | null; // null → skip the lock scene
   hint: string;
   imgs: string[];
+  /** Sender's WhatsApp (digits, country code) for the reply button; null → generic share. */
+  wa: string | null;
 }
 
 function param(params: URLSearchParams, key: string): string | undefined {
@@ -94,6 +96,7 @@ export function resolveContent(search: string = window.location.search): CardCon
     key,
     hint: pick("hint", CONFIG.hint, dob ? "Hint · your birth date (DDMM)" : "Hint · ask the sender"),
     imgs,
+    wa: (param(p, "wa") ?? "").replace(/\D/g, "") || null,
   };
 }
 

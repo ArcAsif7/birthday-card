@@ -451,3 +451,38 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .btn::after, .ring::before, .load-bar i, .letter-panel { animation: none !important; }
 }
+
+/* ============================================================================
+   Phase 1 additions: live ticker · music toggle · reply button
+   ============================================================================ */
+.count-live {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  opacity: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.music-btn {
+  position: fixed;
+  z-index: 30;
+  top: calc(env(safe-area-inset-top) + 14px);
+  right: 14px;
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(127, 127, 127, 0.12);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: var(--accent);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.music-btn svg { width: 18px; height: 18px; }
+.music-btn:active { transform: scale(0.92); }
+.music-btn.is-off { color: var(--ink-faint); }
+.music-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.btn--reply { text-decoration: none; }

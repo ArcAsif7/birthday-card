@@ -4,6 +4,7 @@ import { resolveContent, ageParts } from "./config.ts";
 import { buildScenes, bearWake, type SceneName } from "./scenes.ts";
 import { Writing } from "./writing.ts";
 import { ParticleField } from "./particles.ts";
+import { MusicBox } from "./music.ts";
 import { resolveTheme, fill } from "./themes.ts";
 
 /**
@@ -47,6 +48,44 @@ async function init() {
   });
   field.start();
 
+  // ---------------------------------------------------------------- music
+  // Original synthesized music-box loop; starts on the FIRST tap (autoplay
+  // policy) and the corner button toggles it.
+  const music = new MusicBox();
+  const syncMusicBtn = () => {
+    const line = refs.musicBtn.querySelector<SVGLineElement>(".mute-line");
+    if (line) line.style.display = music.playing ? "none" : "";
+    refs.musicBtn.classList.toggle("is-off", !music.playing);
+  };
+  document.addEventListener("pointerdown", () => { music.start(); syncMusicBtn(); }, { once: true });
+  refs.musicBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    music.toggle();
+    syncMusicBtn();
+  });
+
+  // ------------------------------------------------------------- reply button
+  // Closes the emotional loop: the recipient sends a reaction straight back.
+  const replyText = encodeURIComponent(
+    "I just opened the magical card you made for me — thank you! ♡ — " + content.to
+  );
+  refs.replyBtn.href = content.wa
+    ? "https://wa.me/" + content.wa + "?text=" + replyText
+    : "https://wa.me/?text=" + replyText;
+
+  // ------------------------------------------------------- double-tap hearts
+  // Instagram muscle memory: double-tap anywhere = a little celebration burst.
+  if (!reduced) {
+    let lastTap = 0;
+    document.addEventListener("pointerdown", (e) => {
+      const now = performance.now();
+      if (now - lastTap < 320) {
+        field.burst(e.clientX, e.clientY, 20);
+        lastTap = 0;
+      } else lastTap = now;
+    });
+  }
+
   // ------------------------------------------------------------------ writing
   // Ink + pen glow track the active theme's palette so the greeting reads on
   // any background (dark ink on the bright themes, gold on amethyst).
@@ -70,12 +109,17 @@ async function init() {
   const flow = order.filter(enabled);
 
   let current: SceneName | null = null;
-  let memTimer = 0; // auto-slide interval for the memories carousel
+  let memTimer = 0;  // auto-slide interval for the memories carousel
+  let liveTimer = 0; // ticking seconds line on the counter scene
 
   function goto(name: SceneName) {
     if (memTimer && name !== "memories") {
       clearInterval(memTimer);
       memTimer = 0;
+    }
+    if (liveTimer && name !== "counter") {
+      clearInterval(liveTimer);
+      liveTimer = 0;
     }
     if (current) refs.scenes[current].classList.remove("is-active");
     current = name;
@@ -195,6 +239,19 @@ async function init() {
       spin(refs.countNums.years, parts.years, 0.3);
       spin(refs.countNums.months, parts.months, 0.5);
       spin(refs.countNums.days, parts.days, 0.7);
+
+      // live ticking line — seconds counting in real time (very alive)
+      if (liveTimer) clearInterval(liveTimer);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const tickLive = () => {
+        const now = new Date();
+        refs.countLive.textContent =
+          "+ " + pad(now.getHours()) + "h " + pad(now.getMinutes()) + "m " +
+          pad(now.getSeconds()) + "s — and still counting ♡";
+      };
+      tickLive();
+      liveTimer = window.setInterval(tickLive, 1000);
+      gsap.fromTo(refs.countLive, { opacity: 0 }, { opacity: 1, duration: 0.8, delay: reduced ? 0 : 2.2 });
     },
 
     memories() {
@@ -298,11 +355,12 @@ async function init() {
 
       if (reduced) {
         writing.showInstant();
-        gsap.set(refs.finaleFrom, { opacity: 1, y: 0 });
+        gsap.set([refs.finaleFrom, refs.replyBtn], { opacity: 1, y: 0 });
         gsap.set(refs.replay, { opacity: 1 });
         refs.replay.classList.add("is-on");
         return;
       }
+      gsap.set(refs.replyBtn, { opacity: 0, y: 10 });
 
       const r = slotRect();
       field.burst(r.left + r.width / 2, r.top + r.height / 2, 40);
@@ -322,8 +380,10 @@ async function init() {
       tl.add(() => {
         const r2 = slotRect();
         field.burst(r2.left + r2.width / 2, r2.top + r2.height * 0.4, 54);
+        field.fireworks(4); // the sky celebrates too
       }, "-=0.5");
       tl.to(refs.finaleFrom, { opacity: 1, y: 0, duration: 0.8 }, "-=0.3");
+      tl.to(refs.replyBtn, { opacity: 1, y: 0, duration: 0.7 }, "-=0.4");
       tl.to(refs.replay, {
         opacity: 1, duration: 0.6,
         onComplete: () => refs.replay.classList.add("is-on"),

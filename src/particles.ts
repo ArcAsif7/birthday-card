@@ -8,7 +8,7 @@
 
 import type { AmbientStyle, BurstShape } from "./themes.ts";
 
-type Shape = AmbientStyle | BurstShape;
+type Shape = AmbientStyle | BurstShape | "fw";
 
 interface P {
   shape: Shape;
@@ -127,6 +127,37 @@ export class ParticleField {
     }
   }
 
+  /**
+   * Fireworks: staggered volleys of ring-shell sparks in the upper sky.
+   * Each shell is a uniform ring so it blooms as a true circle, drawn additive.
+   */
+  fireworks(volleys = 4) {
+    if (this.opts.reduced) return;
+    for (let v = 0; v < volleys; v++) {
+      setTimeout(() => {
+        const cx = this.w * (0.2 + Math.random() * 0.6);
+        const cy = this.h * (0.12 + Math.random() * 0.28);
+        const n = 36;
+        const base = 150 + Math.random() * 90;
+        const color = this.pick();
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2;
+          const sp = base * (0.92 + Math.random() * 0.16);
+          this.ps.push({
+            shape: "fw",
+            x: cx, y: cy,
+            vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            size: 2 + Math.random() * 1.6,
+            rot: 0, vr: 0,
+            life: 1, decay: 0.5 + Math.random() * 0.2,
+            tw: Math.random() * Math.PI * 2,
+            color: Math.random() < 0.75 ? color : this.pick(), // mostly one hue per shell
+          });
+        }
+      }, v * 650);
+    }
+  }
+
   start() {
     this.last = performance.now();
     const loop = (t: number) => {
@@ -179,6 +210,16 @@ export class ParticleField {
       ctx.translate(p.x, p.y);
 
       switch (p.shape) {
+        case "fw": {
+          ctx.globalCompositeOperation = "lighter";
+          ctx.globalAlpha = Math.min(1, p.life * 1.3);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size * (0.4 + p.life * 0.8), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalCompositeOperation = "source-over";
+          break;
+        }
         case "confetti": {
           ctx.rotate(p.rot);
           ctx.globalAlpha = p.decay ? Math.min(1, p.life * 1.4) : 0.85;

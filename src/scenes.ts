@@ -18,6 +18,7 @@ export interface SceneRefs {
   startBtn: HTMLButtonElement;
   // counter
   countNums: { years: HTMLElement; months: HTMLElement; days: HTMLElement };
+  countLive: HTMLElement;
   countNext: HTMLButtonElement;
   // memories
   memNext: HTMLButtonElement;
@@ -28,7 +29,9 @@ export interface SceneRefs {
   // finale
   finaleSlot: HTMLElement;
   finaleFrom: HTMLElement;
+  replyBtn: HTMLAnchorElement;
   replay: HTMLButtonElement;
+  musicBtn: HTMLButtonElement;
 }
 
 export type SceneName = "lock" | "loading" | "intro" | "counter" | "memories" | "message" | "finale";
@@ -133,8 +136,10 @@ export function buildScenes(root: HTMLElement, c: CardContent, theme: Theme): Sc
   const years = cell("years");
   const months = cell("months");
   const days = cell("days");
+  const countLive = el("div", "count-live");
+  countLive.setAttribute("aria-live", "off");
   const countNext = btn("Next");
-  counter.append(countTitle, countSub, row, countNext);
+  counter.append(countTitle, countSub, row, countLive, countNext);
 
   /* ------------------------------------------------------------ memories -- */
   const memories = scene("memories", "Special memories");
@@ -184,7 +189,12 @@ export function buildScenes(root: HTMLElement, c: CardContent, theme: Theme): Sc
   finaleSlot.style.placeItems = "center";
   const finaleFrom = el("p", "finale-from");
   finaleFrom.innerHTML = `from <b>${escapeHtml(c.from)}</b>`;
-  finale.append(finaleTag, finaleSlot, finaleFrom);
+  const replyBtn = document.createElement("a");
+  replyBtn.className = "btn btn--reply";
+  replyBtn.textContent = "Reply with love ♡";
+  replyBtn.target = "_blank";
+  replyBtn.rel = "noopener";
+  finale.append(finaleTag, finaleSlot, finaleFrom, replyBtn);
 
   const replay = document.createElement("button");
   replay.className = "replay";
@@ -193,6 +203,13 @@ export function buildScenes(root: HTMLElement, c: CardContent, theme: Theme): Sc
     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>Replay</span>`;
   root.appendChild(replay);
+
+  const musicBtn = document.createElement("button");
+  musicBtn.className = "music-btn";
+  musicBtn.type = "button";
+  musicBtn.setAttribute("aria-label", "Toggle music");
+  musicBtn.innerHTML = musicIcon();
+  root.appendChild(musicBtn);
 
   return {
     root,
@@ -205,6 +222,7 @@ export function buildScenes(root: HTMLElement, c: CardContent, theme: Theme): Sc
     introBear,
     startBtn,
     countNums: { years, months, days },
+    countLive,
     countNext,
     memNext,
     letterBody,
@@ -212,7 +230,9 @@ export function buildScenes(root: HTMLElement, c: CardContent, theme: Theme): Sc
     msgNext,
     finaleSlot,
     finaleFrom,
+    replyBtn,
     replay,
+    musicBtn,
   };
 }
 
@@ -396,6 +416,13 @@ export function bearWake(svg: SVGSVGElement) {
   (svg.querySelector(".bear-zzz") as SVGElement | null)?.style.setProperty("display", "none");
   (svg.querySelector(".bear-eyes-open") as SVGElement | null)?.style.removeProperty("display");
   (svg.querySelector(".bear-smile") as SVGElement | null)?.style.removeProperty("display");
+}
+
+export function musicIcon(): string {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>
+    <line class="mute-line" x1="3" y1="3" x2="21" y2="21" style="display:none"/></svg>`;
 }
 
 function heartLockSvg(): string {
