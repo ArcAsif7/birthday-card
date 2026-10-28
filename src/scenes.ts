@@ -30,6 +30,7 @@ export interface SceneRefs {
   finaleSlot: HTMLElement;
   finaleFrom: HTMLElement;
   replyBtn: HTMLAnchorElement;
+  madeWith: HTMLAnchorElement;
   replay: HTMLButtonElement;
   musicBtn: HTMLButtonElement;
 }
@@ -194,7 +195,13 @@ export function buildScenes(root: HTMLElement, c: CardContent, theme: Theme): Sc
   replyBtn.textContent = "Reply with love ♡";
   replyBtn.target = "_blank";
   replyBtn.rel = "noopener";
-  finale.append(finaleTag, finaleSlot, finaleFrom, replyBtn);
+  // Every card a recipient opens is also how they find out where to make one.
+  const madeWith = document.createElement("a");
+  madeWith.className = "made-with";
+  madeWith.href = "https://getwishlab.com/";
+  madeWith.target = "_top";
+  madeWith.innerHTML = `made with <b>WishLab</b> · make one for someone →`;
+  finale.append(finaleTag, finaleSlot, finaleFrom, replyBtn, madeWith);
 
   const replay = document.createElement("button");
   replay.className = "replay";
@@ -231,6 +238,7 @@ export function buildScenes(root: HTMLElement, c: CardContent, theme: Theme): Sc
     finaleSlot,
     finaleFrom,
     replyBtn,
+    madeWith,
     replay,
     musicBtn,
   };

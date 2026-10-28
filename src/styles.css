@@ -328,10 +328,18 @@ body {
    ============================================================================ */
 .mem-track {
   width: 100%; display: flex; gap: 18px;
+  position: relative; /* card.offsetLeft is measured from the track, wherever it sits */
   overflow-x: auto; scroll-snap-type: x mandatory;
   padding: 18px 12vw 26px; -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .mem-track::-webkit-scrollbar { display: none; }
+/* Wide screens: keep a phone-like window so photos still glide past one by one
+   (side padding = half the window minus half a card, so every photo can centre). */
+@media (min-width: 700px) {
+  .mem-track { max-width: 600px; margin: 0 auto; padding-inline: 175px; cursor: grab; }
+  .mem-track.is-dragging { cursor: grabbing; scroll-snap-type: none; }
+  .mem-track img { -webkit-user-drag: none; user-select: none; pointer-events: none; }
+}
 .mem-card {
   flex: 0 0 min(64vw, 250px); aspect-ratio: 3 / 4;
   scroll-snap-align: center; border-radius: 16px; overflow: hidden;
@@ -486,3 +494,8 @@ body {
 .music-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 .btn--reply { text-decoration: none; }
+.made-with {
+  margin-top: 4px; font-size: 0.68rem; letter-spacing: 0.08em; color: var(--ink-soft);
+  text-decoration: none; opacity: 0; -webkit-tap-highlight-color: transparent;
+}
+.made-with b { color: var(--title); font-weight: 600; }

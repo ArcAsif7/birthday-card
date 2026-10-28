@@ -263,15 +263,23 @@ async function init() {
       if (memTimer) clearInterval(memTimer);
       const cards = Array.from(track.querySelectorAll<HTMLElement>(".mem-card"));
       if (cards.length < 2) return;
-      track.style.scrollSnapType = "none"; // snap fights programmatic glides
-      let idx = 0;
-      memTimer = window.setInterval(() => {
-        idx = (idx + 1) % cards.length;
-        const card = cards[idx];
+      // The photo nearest the centre — so the glide continues from wherever the user left it.
+      const centred = () => {
+        const mid = track.scrollLeft + track.clientWidth / 2;
+        let best = 0;
+        cards.forEach((c, i) => {
+          if (Math.abs(c.offsetLeft + c.clientWidth / 2 - mid) <
+              Math.abs(cards[best].offsetLeft + cards[best].clientWidth / 2 - mid)) best = i;
+        });
+        return best;
+      };
+      const glide = () => {
+        const card = cards[(centred() + 1) % cards.length];
+        const max = track.scrollWidth - track.clientWidth;
         const target = card.offsetLeft - (track.clientWidth - card.clientWidth) / 2;
         // long, buttery glide + a little themed sparkle greeting the new photo
         gsap.to(track, {
-          scrollLeft: Math.max(0, target),
+          scrollLeft: Math.min(max, Math.max(0, target)),
           duration: 1.15,
           ease: "power2.inOut",
           onComplete: () => {
@@ -279,17 +287,44 @@ async function init() {
             field.burst(r.left + r.width / 2, r.top + r.height * 0.3, 10);
           },
         });
-      }, 3000);
-      track.addEventListener(
-        "pointerdown",
-        () => {
-          if (memTimer) clearInterval(memTimer);
-          memTimer = 0;
-          gsap.killTweensOf(track);
-          track.style.scrollSnapType = ""; // restore finger-snap for manual swiping
-        },
-        { once: true }
-      );
+      };
+      const play = () => {
+        if (memTimer) clearInterval(memTimer);
+        track.style.scrollSnapType = "none"; // snap fights programmatic glides
+        memTimer = window.setInterval(glide, 3000);
+      };
+      play();
+
+      // Touch or mouse takes over; the auto-glide comes back after a few idle seconds.
+      let resume = 0, dragX = -1, dragFrom = 0;
+      const pause = () => {
+        if (memTimer) clearInterval(memTimer);
+        memTimer = 0;
+        clearTimeout(resume);
+        gsap.killTweensOf(track);
+        track.style.scrollSnapType = ""; // restore finger-snap for manual swiping
+      };
+      const later = () => {
+        clearTimeout(resume);
+        resume = window.setTimeout(() => { if (current === "memories") play(); }, 4000);
+      };
+      track.onpointerdown = (e) => {
+        pause();
+        if (e.pointerType === "mouse") { // desktop has no swipe: drag to scroll
+          dragX = e.clientX; dragFrom = track.scrollLeft;
+          track.classList.add("is-dragging"); track.setPointerCapture(e.pointerId);
+        }
+      };
+      track.onpointermove = (e) => { if (dragX >= 0) track.scrollLeft = dragFrom - (e.clientX - dragX); };
+      track.onpointerup = track.onpointercancel = () => {
+        if (dragX >= 0) {
+          dragX = -1; track.classList.remove("is-dragging");
+          const c = cards[centred()];
+          track.scrollTo({ left: c.offsetLeft - (track.clientWidth - c.clientWidth) / 2, behavior: "smooth" });
+        }
+        later();
+      };
+      track.onwheel = () => { pause(); later(); };
     },
 
     message() {
@@ -355,12 +390,12 @@ async function init() {
 
       if (reduced) {
         writing.showInstant();
-        gsap.set([refs.finaleFrom, refs.replyBtn], { opacity: 1, y: 0 });
+        gsap.set([refs.finaleFrom, refs.replyBtn, refs.madeWith], { opacity: 1, y: 0 });
         gsap.set(refs.replay, { opacity: 1 });
         refs.replay.classList.add("is-on");
         return;
       }
-      gsap.set(refs.replyBtn, { opacity: 0, y: 10 });
+      gsap.set([refs.replyBtn, refs.madeWith], { opacity: 0, y: 10 });
 
       const r = slotRect();
       field.burst(r.left + r.width / 2, r.top + r.height / 2, 40);
@@ -384,6 +419,7 @@ async function init() {
       }, "-=0.5");
       tl.to(refs.finaleFrom, { opacity: 1, y: 0, duration: 0.8 }, "-=0.3");
       tl.to(refs.replyBtn, { opacity: 1, y: 0, duration: 0.7 }, "-=0.4");
+      tl.to(refs.madeWith, { opacity: 0.75, y: 0, duration: 0.7 }, "-=0.2");
       tl.to(refs.replay, {
         opacity: 1, duration: 0.6,
         onComplete: () => refs.replay.classList.add("is-on"),
